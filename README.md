@@ -18,13 +18,9 @@ Comes with a [public instance](#public-instance) for out-of-the-box integration.
 > [!NOTE]
 > For simplicity's sake, NutPunch does not implement [TURN](https://en.wikipedia.org/wiki/Traversal_Using_Relays_around_NAT) at the moment.
 
-If you're having **connectivity issues in a game powered by NutPunch**, please make sure **there is a direct route to your computer** from the public network. That means, even if you're on a hotel Wi-Fi network in rural Turkmenistan, NutPunch should still work, as long as you **aren't masking your outbound IP address system-wide**. Using a proxy service for accessing the Web shouldn't interfere as long as **you aren't routing your whole traffic in TUN mode** or something similar.
+If you're having **connectivity issues in a game powered by NutPunch**, please make sure (1) you aren't mangling UDP packets (**disable [zapret](https://github.com/bol-van/zapret)**) and (2) **there is a direct route to your computer** from the public net. Using a proxy service for accessing the Web shouldn't interfere as long as **you aren't routing your game through it**.
 
-Here's a short infographic for troubleshooting connectivity with [v2rayN](https://github.com/2dust/v2rayN) and similar proxy clients:
-
-![An infographic telling you to disable TUN mode.](.github/assets/infographic.png)
-
-Alternatively, if you don't feel like switching TUN on and off, you can set up your VPN client to route NutPunch-powered games directly rather than through the target proxy server. For example, in [AmneziaVPN](https://amnezia.org), use the split tunneling feature to exclude the game's binary from VPN routing. Just follow this infographic from the [split-tunneling docs](https://docs.amnezia.org/documentation/instructions/vpn-split-tunneling#split-tunneling-by-apps-on-windows):
+You can **set up your VPN client to ignore NutPunch-powered games** rather than route them through the target proxy server. For example, in [AmneziaVPN](https://amnezia.org), use the split tunneling feature to **exclude the game's binary from VPN routing**. Just follow this infographic from [**their split-tunneling docs**](https://docs.amnezia.org/documentation/instructions/vpn-split-tunneling#split-tunneling-by-apps-on-windows):
 
 ![An infographic telling you to how to enable per-app split-tunnelling.](.github/assets/amnezia.png)
 
