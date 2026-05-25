@@ -30,7 +30,7 @@ This library implements P2P networking, where **each peer communicates with all 
 
 Before you can punch any holes in your peers' NAT, you will need a hole-punching server **with a public IP address** assigned. Querying a public server lets us bust a gateway open to the global network, all while the server relays the connection info for other peers to us. If you're just testing, you can use [our public instance](#public-instance) instead of [hosting your own](#hosting-your-own-nutpuncher). The current server implementation uses a lobby-based approach, where each lobby supports up to 8 peers and is identified by a unique ASCII string.
 
-In order to run your own hole-puncher server, you'll need to get the server binary from our [reference implementation releases](https://github.com/Schwungus/nutpunch/releases/tag/rolling). If you're in a pinch, don't have access to a public IP address, and your players reside on a LAN/virtual network such as [Radmin VPN](https://www.radmin-vpn.com), you can actually run NutPuncher locally and use your LAN IP address to connect to it.
+In order to run your own hole-punching server, you'll need to obtain a server binary. Some games ship it, while others don't. In the latter case, you can [build NutPuncher from sources](#building-from-sources). If you're in a pinch, don't have access to a public IP address, and your players reside on a LAN/virtual network such as [Radmin VPN](https://www.radmin-vpn.com), you can actually run NutPuncher locally and use your LAN IP address to connect to it.
 
 Once you've figured out how the players are to connect to your hole-puncher server, you can start coding up your game. [The complete example](src/Test.c) might be overwhelming at first, but make sure to skim through it before you do any heavy networking. Here's the general usage guide for the NutPunch library:
 
@@ -161,6 +161,49 @@ Just like in the example above, you can override NutPunch's logging facility bef
 
 ## Hosting your own NutPuncher
 
-If you're dissatisfied with [the public instance](#public-instance), whether from needing to stick to a specific build or fork or whatever, you can host your own. Make sure to read [the introductory pamphlet](#introductory-lecture) before attempting this.
+If you're dissatisfied with [the public instance](#public-instance), whether from needing to stick to a specific build or fork or whatever, you can easily host your own. Make sure to read [the introductory pamphlet](#introductory-lecture) before attempting this.
 
-**TODO**: document how to build a NutPuncher yourself.
+### Building from Sources
+
+To build a NutPuncher from sources, make sure you have [CMake](https://cmake.org) and a C/C++ compiler installed. For example, on an Ubuntu/Debian host, run:
+
+```sh
+sudo apt update
+sudo apt install --yes git cmake make g++
+```
+
+Assuming you're hosting the NutPuncher on the Linux machine you're building it on, here's what you need to run:
+
+```sh
+git clone https://github.com/Schwungus/NutPunch
+cd NutPunch
+cmake -S . -B build -D NUTPUNCH_BUILD_SERVER=ON
+cmake --build build
+```
+
+Then run the NutPuncher binary as you would usually do:
+
+```sh
+./build/NutPuncher
+```
+
+If you wish to keep the NutPuncher running between system restarts and internal errors/crashes, check out [the systemd service we're using ourselves](assets/NutPuncher@.service) as reference. But in short, you'll have to write the following in your `~/.config/systemd/user/NutPuncher.service`:
+
+```ini
+[Unit]
+Description=NutPuncher
+After=network.target
+
+[Service]
+ExecStart=%h/NutPunch/build/NutPuncher
+Restart=always
+
+[Install]
+WantedBy=default.target
+```
+
+And then enable and run this service by executing:
+
+```sh
+systemctl --user enable --now NutPuncher
+```
