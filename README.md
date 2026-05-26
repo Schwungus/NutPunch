@@ -1,8 +1,10 @@
-<!-- markdownlint-disable MD033 MD045 -->
+<!-- markdownlint-disable MD033 -->
 
 # NutPunch
 
-<img align="right" src=".github/assets/nutpunch256.png">
+[header]: include/NutPunch.h
+
+<img align="right" alt="A cracked-peanut sign." src=".github/assets/nutpunch256.png">
 
 > [!CAUTION]
 > NutPunch implements **UDP-based peer-to-peer networking**. **Client-server architecture** is a lot more commonplace in games, and arguably much easier to implement and understand. Use NutPunch only if you know what you're getting yourself into. You have been warned.
@@ -28,14 +30,12 @@ You can **set up your VPN client to ignore NutPunch-powered games** rather than 
 
 This library implements P2P networking, where **each peer communicates with all others**. It's a complex model, and it could be counterproductive to use if you don't know what you're signing yourself up for. If you don't feel like reading the immediately following blanket of words and scribbles, you may skip to [using premade integrations](#premade-integrations).
 
-Before you can punch any holes in your peers' NAT, you will need a hole-punching server **with a public IP address** assigned. Querying a public server lets us bust a gateway open to the global network, all while the server relays the connection info for other peers to us. If you're just testing, you can use [our public instance](#public-instance) instead of [hosting your own](#hosting-your-own-nutpuncher). The current server implementation uses a lobby-based approach, where each lobby supports up to 8 peers and is identified by a unique ASCII string.
+Before you can punch any holes in your peers' NAT, you will need a hole-punching server **with a public IPv4 address assigned**. Querying a public server lets us bust a gateway open from your computer to the public network, which, by definition of hole-punching, is then leaked to other peers for them to be able to establish a direct connection to you. You're free to use [our public instance](#public-instance) to do the leaking, but [hosting your own instance](#hosting-your-own-nutpuncher) is also possible.
 
-In order to run your own hole-punching server, you'll need to obtain a server binary. Some games ship it, while others don't. In the latter case, you can [build NutPuncher from sources](#building-from-sources). If you're in a pinch, don't have access to a public IP address, and your players reside on a LAN/virtual network such as [Radmin VPN](https://www.radmin-vpn.com), you can actually run NutPuncher locally and use your LAN IP address to connect to it.
+The current server implementation uses a lobby-based approach, where each lobby supports up to 8 peers and is identified by a unique ASCII string. [The complete example](src/Test.c) might be overwhelming at first, but make sure to skim through it before you do any heavy networking. Here's the general usage guide for the NutPunch library:
 
-Once you've figured out how the players are to connect to your hole-puncher server, you can start coding up your game. [The complete example](src/Test.c) might be overwhelming at first, but make sure to skim through it before you do any heavy networking. Here's the general usage guide for the NutPunch library:
-
-1. At the start of the program, set your game ID using `NutPunch_SetGameId("game-id")`.
-2. Host a lobby with `NutPunch_Host("lobby-name")`, or join an existing one with `NutPunch_Join("lobby-name")`.
+1. At the start of the program, set your game ID using `NutPunch_SetGameId("game-id")`. It is optional but highly recommended, as it allows distinguishing your game's lobbies from others'. A common example of a game ID would be `"GameName v1.0.0"`.
+2. Host a lobby with `NutPunch_Host("lobby-name")`, or join an existing one with `NutPunch_Join("lobby-name")`. Lobby names and lobby IDs are one and the same even if different wording is used. This also means you cannot have two different lobbies with identical names; the lobby's name identifies it uniquely per game ID.
 3. Listen for events:
     1. Call `NutPunch_Update()` each frame. This will also automatically send lobby and peer metadata back and forth to the NutPuncher server.
     2. Check your status by matching the returned value against `NPS_*` constants. `NPS_Online` is what you're looking for normally, but make sure to handle `NPS_Error`. To get a human-readable error description, call `NutPunch_GetLastError()`.
@@ -44,8 +44,9 @@ Once you've figured out how the players are to connect to your hole-puncher serv
     1. Send messages with `NutPunch_Send()` or `NutPunch_SendReliably()` (for reliable delivery).
     2. Poll for incoming messages with `NutPunch_HasMessage()` and retrieve them with `NutPunch_NextMessage()`.
     3. Set/retrieve lobby or peer metadata with `NutPunch_Set*Data()`/`NutPunch_Get*Data()`.
+    4. At this point you might have to call `NutPunch_Flush()` to flush the outgoing packet queue to prevent 1-frame delays between updating the gamestate locally and sending those updates over the network.
 6. Repeat steps 3 through 5 throughout the networking session.
-7. Use `NutPunch_Disconnect()` to leave the lobby, or `NutPunch_Shutdown()` at the end of your program to do final clean-up. You're all set!
+7. Use `NutPunch_Disconnect()` to leave the lobby, or `NutPunch_Shutdown()` at the end of your program to perform final cleanup. (The latter disconnects you from the lobby as well.) You're all set!
 
 An important aspect of NutPunch networking is the ability to set lobby/peer metadata in a simplified key-value-store fashion. Peer metadata can include e.g. the peer's username, their character - anything you can squeeze into a 32-byte null-terminated string, mapped to 16-byte null-terminated string key. The same applies to lobby metadata: this could be the name of the level to play on, the difficulty level, rules to alter the game's behavior, etc.
 
@@ -74,11 +75,11 @@ add_executable(MyGame main.c) # your game's CMake target goes here
 target_link_libraries(MyGame PRIVATE NutPunch)
 ```
 
-For other build systems (or lack thereof), you only need to copy [`NutPunch.h`](include/NutPunch.h) into your include path. Make sure to link against `ws2_32` on Windows though, or else you'll end up with scary linker errors related to Winsock.
+For other build systems (or lack thereof), you only need to copy [`NutPunch.h`][header] into your include path. Make sure to link against `ws2_32` on Windows though, or else you'll end up with scary linker errors related to Winsock.
 
 ## Basic Usage
 
-Once [`NutPunch.h`](include/NutPunch.h) is in your include-path, using it is straightforward, just like any header-only library. Select a source file where the library's function definitions will reside (it could be your `main.c` as well), tell the compiler to add NutPunch implementation details with a `#define NUTPUNCH_IMPLEMENTATION`, and `#include` the library's main header inside it:
+Once [`NutPunch.h`][header] is in your include-path, using it is straightforward, just like any header-only library. Select a source file where the library's function definitions will reside (it could be your `main.c` as well), tell the compiler to add NutPunch implementation details with a `#define NUTPUNCH_IMPLEMENTATION`, and `#include` the library's main header inside it:
 
 ```c
 #include <stdlib.h> // for EXIT_SUCCESS
@@ -102,7 +103,7 @@ int main(int argc, char* argv[]) {
 }
 ```
 
-If you want to see all the juicy APIs in action, read up on [`Test.c`](src/Test.c) from this repo. For a general overview of available functionality, just read the doc-comments for the functions around the middle of [`NutPunch.h`](include/NutPunch.h). Also take a look at [the advanced usage section](#advanced-usage) to discover things you can customize.
+If you want to see all the juicy APIs in action, read up on [`Test.c`](src/Test.c) from this repo. For a general overview of available functionality, just read the doc-comments for the functions around the middle of [`NutPunch.h`][header]. Also take a look at [the advanced usage section](#advanced-usage) to discover things you can customize.
 
 ## Public Instance
 
@@ -147,7 +148,7 @@ Either way, here's a no-stdlib SDL3 example:
 
 ### Customize Logger Implementation
 
-Just like in the example above, you can override NutPunch's logging facility before including `NutPunch.h`:
+Just like in the example above, you can override NutPunch's logging facility before including [`NutPunch.h`][header]:
 
 ```c
 #include <stdio.h>
@@ -163,16 +164,14 @@ Just like in the example above, you can override NutPunch's logging facility bef
 
 If you're dissatisfied with [the public instance](#public-instance), whether from needing to stick to a specific build or fork or whatever, you can easily host your own. Make sure to read [the introductory pamphlet](#introductory-lecture) before attempting this.
 
-### Building from Sources
-
-To build a NutPuncher from sources, make sure you have [CMake](https://cmake.org) and a C/C++ compiler installed. For example, on an Ubuntu/Debian host, run:
+In order to run your own hole-punching server, you'll need to obtain a server binary, usually by building NutPuncher from sources. To do that, make sure you have [CMake](https://cmake.org) and a C/C++ compiler installed. For example, on an Ubuntu/Debian host, run:
 
 ```sh
 sudo apt update
 sudo apt install --yes git cmake make g++
 ```
 
-Assuming you're hosting the NutPuncher on the Linux machine you're building it on, here's what you need to run:
+Assuming you're hosting the NutPuncher on the Linux machine you're building it on, here's a TL;DR of what commands you need to execute:
 
 ```sh
 git clone https://github.com/Schwungus/NutPunch
