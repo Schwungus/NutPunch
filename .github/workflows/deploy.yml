@@ -17,7 +17,7 @@ jobs:
       contents: write
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
       - name: Configure
         run: cmake -S . -B build -G Ninja -D CMAKE_BUILD_TYPE=Release -D
           NUTPUNCH_BUILD_SERVER=ON
