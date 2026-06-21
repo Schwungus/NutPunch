@@ -1,5 +1,9 @@
 <!-- markdownlint-disable MD033 -->
 
+# SUPERSEDED BY [NutBlast](https://nutblast.schwung.us)
+
+This repository and the public server(s) will no longer be maintained. Please check out [NutBlast](https://nutblast.schwung.us) instead, it's more reliable and also supports Emscripten.
+
 # NutPunch
 
 [header]: include/NutPunch.h
